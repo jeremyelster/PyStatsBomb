@@ -5,17 +5,6 @@ import os
 import requests
 
 
-def get_hmm():
-    """Get a thought."""
-    return 'hmmm...'
-
-
-def hmm():
-    """Contemplation..."""
-    if helpers.get_answer():
-        print(get_hmm())
-
-
 class Client():
     """Connect to the data source and start getting data. Source should
     point to the folder with the data inside"""
@@ -45,13 +34,18 @@ class Client():
     def get_lineups(self, match_id=None):
         self.lineups = []
 
-        match_ids = self.get_match_ids()
+        match_ids = self.get_match_ids(match_id=match_id)
         for match in match_ids:
-            self.lineups = self.lineups + self.get_data(
+            res = self.get_data(
                 source_dir=self.source,
                 data_dir='lineups',
                 data_name=str(match),
                 ext='.json')
+            # Need to add match_id to lineup
+            res[0]['match_id'] = match
+            res[1]['match_id'] = match
+
+            self.lineups = self.lineups + res
 
     def get_events(self, match_id=None):
         self.events = []
@@ -67,8 +61,15 @@ class Client():
     def get_competition_list(self):
         return [comp['competition_id'] for comp in self.competitions]
 
-    def get_match_ids(self):
-        return [match['match_id'] for match in self.matches]
+    def get_match_ids(self, match_id=None):
+        if match_id is not None:
+            match_id_list = [match_id]
+            match_ids = [
+                match['match_id'] for match in self.matches
+                if match['match_id'] in match_id_list]
+        else:
+            match_ids = [match['match_id'] for match in self.matches]
+        return match_ids
 
     def get_data(
         self, source_dir=None, data_dir=None, data_name=None, ext=None
