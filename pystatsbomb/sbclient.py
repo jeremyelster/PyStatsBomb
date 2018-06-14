@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from . import helpers
+from .helpers import getMatchDictChildren, getLineupParse, flatten
 import json
 import os
 import requests
+import pandas as pd
 
 
 class Client():
@@ -20,10 +21,10 @@ class Client():
             data_name='competitions',
             ext='.json')
 
-    def get_matches(self):
+    def get_matches(self, comp_id=None):
         self.matches = []
 
-        competition_list = self.get_competition_list()
+        competition_list = self.get_competition_list(comp_id=comp_id)
         for comp in competition_list:
             self.matches = self.matches + self.get_data(
                 source_dir=self.source,
@@ -51,15 +52,26 @@ class Client():
         self.events = []
 
         match_ids = self.get_match_ids()
-        for match in match_ids[0:1]:
-            self.events = self.events + self.get_data(
+        for match in match_ids:
+            res = self.get_data(
                 source_dir=self.source,
                 data_dir='events',
                 data_name=str(match),
                 ext='.json')
 
-    def get_competition_list(self):
-        return [comp['competition_id'] for comp in self.competitions]
+            for event in res:
+                event['match_id'] = match
+            self.events = self.events + res
+
+    def get_competition_list(self, comp_id=None):
+        if comp_id is not None:
+            comp_id_list = [comp_id]
+            comp_ids = [
+                comp['competition_id'] for comp in self.competitions
+                if comp['competition_id'] in comp_id_list]
+        else:
+            comp_ids = [comp['competition_id'] for comp in self.competitions]
+        return comp_ids
 
     def get_match_ids(self, match_id=None):
         if match_id is not None:
@@ -96,3 +108,32 @@ class Client():
             with open(
                     os.path.join(source_dir, data_name + ext), 'r') as f:
                 return json.load(f)
+
+    def get_all_sb_data(self, comp_id=None, match_id=None, toPandas=True):
+
+        # Get all competitions
+        self.get_competitions()
+        self.get_matches(comp_id=comp_id)
+        self.get_lineups(match_id=match_id)
+        self.get_events(match_id=match_id)
+
+        if toPandas is True:
+            # Competitions
+            self.df_competitions = pd.DataFrame(self.competitions)
+
+            # Matches
+            self.df_matches = pd.DataFrame(
+                [getMatchDictChildren(match) for match in self.matches])
+
+            # Lineups
+            lineup_list = [getLineupParse(l) for l in self.lineups]
+            lineup_flat_list = [
+                player for team in lineup_list for player in team]
+            self.df_lineups = pd.DataFrame(lineup_flat_list)
+
+            # Events
+            flat_events = [flatten(e) for e in self.events]
+            ekeys = [list(e.keys()) for e in flat_events]
+            ekeys_all = [i for s in ekeys for i in s]
+            set_all_keys = set(ekeys_all)
+            self.df_events = pd.DataFrame(flat_events, columns=set_all_keys)
