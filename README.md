@@ -33,3 +33,4 @@ Statsbomb:
 
 
 .. image:: img/statsbomb-logo.jpg 
+
