@@ -9,14 +9,16 @@ import pystatsbomb as sb
 import pandas as pd
 ```
 
-# Initialize the client
-# Optional source to local directory with match data
+Initialize the client
+Optional source to local directory with match data
+
 ```python
 c = sb.Client(source=None)
 ```
 
-# Data for competitions, lineups, matches, events is stored in JSON format
-# Optional call to grab all at once. Also optional to put into pandas dataframes
+Data for competitions, lineups, matches, events is stored in JSON format
+Optional call to grab all at once. Also optional to put into pandas dataframes
+
 ```python
 c.get_all_sb_data(comp_id=None, match_id=None, toPandas=False)
 ```
