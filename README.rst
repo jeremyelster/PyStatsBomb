@@ -27,4 +27,4 @@ c.get_all_sb_data(comp_id=None, match_id=None, toPandas=False)
 # There is a first attempt at plotting as well in StatsBombAnalysis.ipynb
 
 Statsbomb: 
-![alt text](https://github.com/statsbomb/open-data/blob/master/img/statsbomb-logo.jpg "StatsBomb Logo")
+.. image:: https://github.com/statsbomb/open-data/blob/master/img/statsbomb-logo.jpg 
