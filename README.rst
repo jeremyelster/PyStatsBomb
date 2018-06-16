@@ -28,4 +28,8 @@ c.get_all_sb_data(comp_id=None, match_id=None, toPandas=False)
 
 Statsbomb: 
 
+
+![StatsBomb Logo](img/statsbomb-logo.jpg)
+
+
 .. image:: img/statsbomb-logo.jpg 
