@@ -13,14 +13,14 @@ Initialize the client
 Optional source to local directory with match data
 
 ```python
-c = sb.Client(source=None)
+c = sb.Client(local_source_dir=None)
 ```
 
 Data for competitions, lineups, matches, events is stored in JSON format
 Optional call to grab all at once. Also optional to put into pandas dataframes
 
 ```python
-c.get_all_sb_data(comp_id=None, match_id=None, toPandas=False)
+c.get_all_sb_data(comp_id=None, match_id=None, deep_lineup_parse=deep_lineup_parse, toPandas=False)
 ```
 
 
