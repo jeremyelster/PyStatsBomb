@@ -1,0 +1,18 @@
+### Question: Does pressure affect completion percentage?
+
+no_pressure =  df_passes.loc[df_passes['under_pressure'].isnull(), 'pass_outcome_name']# &
+no_pressure = no_pressure.isnull()
+yes_pressure = df_passes.loc[df_passes['under_pressure'].notnull(), 'pass_outcome_name']
+yes_pressure = yes_pressure.isnull()
+
+pd.crosstab(df_passes['pass_outcome_name'].isnull(), df_passes['under_pressure'] == True,  margins=True)
+
+import scipy.stats
+# pressure seems not to have a statistically significant difference on pass completion (simple)
+scipy.stats.ttest_ind(yes_pressure, no_pressure, equal_var=False)
+
+# Why do all stats go left to right?
+
+https://statsbomb.com/2014/02/classifying-central-midfielders/
+https://statsbomb.com/2017/04/passing-network-autographs-and-overshooting-style/
+https://github.com/JoGall/soccermatics

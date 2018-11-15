@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from .helpers import getMatchDictChildren, getLineupParse, flatten
+from .helpers import getMatchDictChildren, getLineupParse, flatten, LineupsSB
+from .plotting import plotpitch, pass_rose
 import json
 import os
 import requests
@@ -10,8 +11,8 @@ class Client():
     """Connect to the data source and start getting data. Source should
     point to the folder with the data inside"""
 
-    def __init__(self, source=None):
-        self.source = source
+    def __init__(self, local_source_dir=None):
+        self.source = local_source_dir
 
     def get_competitions(self):
 
@@ -21,7 +22,7 @@ class Client():
             data_name='competitions',
             ext='.json')
 
-    def get_matches(self, comp_id=None):
+    def get_matches(self, comp_id=None, match_id=None):
         self.matches = []
 
         competition_list = self.get_competition_list(comp_id=comp_id)
@@ -31,11 +32,16 @@ class Client():
                 data_dir='matches',
                 data_name=str(comp),
                 ext='.json')
+        if match_id is not None:
+            self.matches = [
+                match for match in self.matches
+                if match["match_id"] in match_id]
 
     def get_lineups(self, match_id=None):
         self.lineups = []
 
         match_ids = self.get_match_ids(match_id=match_id)
+
         for match in match_ids:
             res = self.get_data(
                 source_dir=self.source,
@@ -51,7 +57,7 @@ class Client():
     def get_events(self, match_id=None):
         self.events = []
 
-        match_ids = self.get_match_ids()
+        match_ids = self.get_match_ids(match_id=match_id)
         for match in match_ids:
             res = self.get_data(
                 source_dir=self.source,
@@ -75,7 +81,7 @@ class Client():
 
     def get_match_ids(self, match_id=None):
         if match_id is not None:
-            match_id_list = [match_id]
+            match_id_list = match_id
             match_ids = [
                 match['match_id'] for match in self.matches
                 if match['match_id'] in match_id_list]
@@ -106,16 +112,19 @@ class Client():
             else:
                 source_dir = os.path.join(source_dir, data_dir)
             with open(
-                    os.path.join(source_dir, data_name + ext), 'r') as f:
+                    os.path.join(source_dir, data_name + ext), 'r',
+                    encoding="utf-8") as f:
                 return json.load(f)
 
-    def get_all_sb_data(self, comp_id=None, match_id=None, toPandas=True):
+    def get_all_sb_data(
+        self, comp_id=None, match_ids=None,
+        deep_lineup_parse=True, toPandas=True):
 
         # Get all competitions
         self.get_competitions()
-        self.get_matches(comp_id=comp_id)
-        self.get_lineups(match_id=match_id)
-        self.get_events(match_id=match_id)
+        self.get_matches(comp_id=comp_id, match_id=match_ids)
+        self.get_lineups(match_id=match_ids)
+        self.get_events(match_id=match_ids)
 
         if toPandas is True:
             # Competitions
@@ -137,3 +146,15 @@ class Client():
             ekeys_all = [i for s in ekeys for i in s]
             set_all_keys = set(ekeys_all)
             self.df_events = pd.DataFrame(flat_events, columns=set_all_keys)
+
+            if deep_lineup_parse:
+                # Parse the lineups to get the playing time
+                print(f"Beginning Deep Lineup Parse")
+                self.deep_lineup = LineupsSB(data=self)
+                self.deep_lineup.getPlayTimeDF()
+                self.deep_lineup.getPositionsDF()
+
+                self.df_play_time = self.deep_lineup.df_play_time
+                self.df_positions = self.deep_lineup.df_positions
+                self.df_deep_lineup = self.deep_lineup.lineups_df
+
